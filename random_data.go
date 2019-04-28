@@ -65,11 +65,16 @@ type jsonContent struct {
 	StreetTypesGB       []string `json:"streetTypesGB"`
 }
 
+type RandData struct {
+	*rand.Rand
+}
+
 var jsonData = jsonContent{}
-var privateRand *rand.Rand
+var privateRand *RandData
 
 func init() {
-	privateRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	// privateRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	privateRand = NewRandData()
 	jsonData = jsonContent{}
 
 	err := json.Unmarshal(data, &jsonData)
@@ -79,163 +84,170 @@ func init() {
 	}
 }
 
-func CustomRand(randToUse *rand.Rand) {
-	privateRand = randToUse
+func NewRandData() *RandData {
+	rd := &RandData{
+		rand.New(rand.NewSource(time.Now().UnixNano())),
+	}
+	return rd
+}
+
+func (rd *RandData) CustomRand(randToUse *rand.Rand) {
+	rd.Rand = randToUse
 }
 
 // Returns a random part of a slice
-func randomFrom(source []string) string {
-	return source[privateRand.Intn(len(source))]
+func (rd RandData) randomFrom(source []string) string {
+	return source[rd.Intn(len(source))]
 }
 
 // Title returns a random title, gender decides the gender of the name
-func Title(gender int) string {
+func (rd RandData) Title(gender int) string {
 	var title = ""
 	switch gender {
 	case Male:
-		title = randomFrom(jsonData.MaleTitles)
+		title = rd.randomFrom(jsonData.MaleTitles)
 		break
 	case Female:
-		title = randomFrom(jsonData.FemaleTitles)
+		title = rd.randomFrom(jsonData.FemaleTitles)
 		break
 	default:
-		title = FirstName(privateRand.Intn(2))
+		title = rd.FirstName(rd.Intn(2))
 		break
 	}
 	return title
 }
 
 // FirstName returns a random first name, gender decides the gender of the name
-func FirstName(gender int) string {
+func (rd RandData) FirstName(gender int) string {
 	var name = ""
 	switch gender {
 	case Male:
-		name = randomFrom(jsonData.FirstNamesMale)
+		name = rd.randomFrom(jsonData.FirstNamesMale)
 		break
 	case Female:
-		name = randomFrom(jsonData.FirstNamesFemale)
+		name = rd.randomFrom(jsonData.FirstNamesFemale)
 		break
 	default:
-		name = FirstName(rand.Intn(2))
+		name = rd.FirstName(rand.Intn(2))
 		break
 	}
 	return name
 }
 
 // LastName returns a random last name
-func LastName() string {
-	return randomFrom(jsonData.LastNames)
+func (rd RandData) LastName() string {
+	return rd.randomFrom(jsonData.LastNames)
 }
 
 // FullName returns a combination of FirstName LastName randomized, gender decides the gender of the name
-func FullName(gender int) string {
-	return FirstName(gender) + " " + LastName()
+func (rd RandData) FullName(gender int) string {
+	return rd.FirstName(gender) + " " + rd.LastName()
 }
 
 // Email returns a random email
-func Email() string {
-	return strings.ToLower(FirstName(RandomGender)+LastName()) + StringNumberExt(1, "", 3) + "@" + randomFrom(jsonData.Domains)
+func (rd RandData) Email() string {
+	return strings.ToLower(rd.FirstName(RandomGender)+rd.LastName()) + rd.StringNumberExt(1, "", 3) + "@" + rd.randomFrom(jsonData.Domains)
 }
 
 // Country returns a random country, countryStyle decides what kind of format the returned country will have
-func Country(countryStyle int64) string {
+func (rd RandData) Country(countryStyle int64) string {
 	country := ""
 	switch countryStyle {
 
 	default:
 
 	case FullCountry:
-		country = randomFrom(jsonData.Countries)
+		country = rd.randomFrom(jsonData.Countries)
 		break
 
 	case TwoCharCountry:
-		country = randomFrom(jsonData.CountriesTwoChars)
+		country = rd.randomFrom(jsonData.CountriesTwoChars)
 		break
 
 	case ThreeCharCountry:
-		country = randomFrom(jsonData.CountriesThreeChars)
+		country = rd.randomFrom(jsonData.CountriesThreeChars)
 		break
 	}
 	return country
 }
 
 // Currency returns a random currency under ISO 4217 format
-func Currency() string {
-	return randomFrom(jsonData.Currencies)
+func (rd RandData) Currency() string {
+	return rd.randomFrom(jsonData.Currencies)
 }
 
 // City returns a random city
-func City() string {
-	return randomFrom(jsonData.Cities)
+func (rd RandData) City() string {
+	return rd.randomFrom(jsonData.Cities)
 }
 
 // ProvinceForCountry returns a randomly selected province (state, county,subdivision ) name for a supplied country.
 // If the country is not supported it will return an empty string.
-func ProvinceForCountry(countrycode string) string {
+func (rd RandData) ProvinceForCountry(countrycode string) string {
 	switch countrycode {
 	case "US":
-		return randomFrom(jsonData.States)
+		return rd.randomFrom(jsonData.States)
 	case "GB":
-		return randomFrom(jsonData.ProvincesGB)
+		return rd.randomFrom(jsonData.ProvincesGB)
 	}
 	return ""
 }
 
 // State returns a random american state
-func State(typeOfState int) string {
+func (rd RandData) State(typeOfState int) string {
 	if typeOfState == Small {
-		return randomFrom(jsonData.StatesSmall)
+		return rd.randomFrom(jsonData.StatesSmall)
 	}
-	return randomFrom(jsonData.States)
+	return rd.randomFrom(jsonData.States)
 }
 
 // Street returns a random fake street name
-func Street() string {
-	return fmt.Sprintf("%s %s", randomFrom(jsonData.People), randomFrom(jsonData.StreetTypes))
+func (rd RandData) Street() string {
+	return fmt.Sprintf("%s %s", rd.randomFrom(jsonData.People), rd.randomFrom(jsonData.StreetTypes))
 }
 
 // StreetForCountry returns a random fake street name typical to the supplied country.
 // If the country is not supported it will return an empty string.
-func StreetForCountry(countrycode string) string {
+func (rd RandData) StreetForCountry(countrycode string) string {
 	switch countrycode {
 	case "US":
-		return Street()
+		return rd.Street()
 	case "GB":
-		return fmt.Sprintf("%s %s", randomFrom(jsonData.StreetNameGB), randomFrom(jsonData.StreetTypesGB))
+		return fmt.Sprintf("%s %s", rd.randomFrom(jsonData.StreetNameGB), rd.randomFrom(jsonData.StreetTypesGB))
 	}
 	return ""
 }
 
 // Address returns an american style address
-func Address() string {
-	return fmt.Sprintf("%d %s,\n%s, %s, %s", Number(100), Street(), City(), State(Small), PostalCode("US"))
+func (rd RandData) Address() string {
+	return fmt.Sprintf("%d %s,\n%s, %s, %s", rd.Number(100), rd.Street(), rd.City(), rd.State(Small), PostalCode("US"))
 }
 
 // Paragraph returns a random paragraph
-func Paragraph() string {
-	return randomFrom(jsonData.Paragraphs)
+func (rd RandData) Paragraph() string {
+	return rd.randomFrom(jsonData.Paragraphs)
 }
 
 // Number returns a random number, if only one integer (n1) is supplied it returns a number in [0,n1)
 // if a second argument is supplied it returns a number in [n1,n2)
-func Number(numberRange ...int) int {
+func (rd RandData) Number(numberRange ...int) int {
 	nr := 0
 	if len(numberRange) > 1 {
 		nr = 1
-		nr = privateRand.Intn(numberRange[1]-numberRange[0]) + numberRange[0]
+		nr = rd.Intn(numberRange[1]-numberRange[0]) + numberRange[0]
 	} else {
-		nr = privateRand.Intn(numberRange[0])
+		nr = rd.Intn(numberRange[0])
 	}
 	return nr
 }
 
-func Decimal(numberRange ...int) float64 {
+func (rd RandData) Decimal(numberRange ...int) float64 {
 	nr := 0.0
 	if len(numberRange) > 1 {
 		nr = 1.0
-		nr = privateRand.Float64()*(float64(numberRange[1])-float64(numberRange[0])) + float64(numberRange[0])
+		nr = rd.Float64()*(float64(numberRange[1])-float64(numberRange[0])) + float64(numberRange[0])
 	} else {
-		nr = privateRand.Float64() * float64(numberRange[0])
+		nr = rd.Float64() * float64(numberRange[0])
 	}
 
 	if len(numberRange) > 2 {
@@ -245,12 +257,12 @@ func Decimal(numberRange ...int) float64 {
 	return nr
 }
 
-func StringNumberExt(numberPairs int, separator string, numberOfDigits int) string {
+func (rd RandData) StringNumberExt(numberPairs int, separator string, numberOfDigits int) string {
 	numberString := ""
 
 	for i := 0; i < numberPairs; i++ {
 		for d := 0; d < numberOfDigits; d++ {
-			numberString += fmt.Sprintf("%d", Number(0, 9))
+			numberString += fmt.Sprintf("%d", rd.Number(0, 9))
 		}
 
 		if i+1 != numberPairs {
@@ -262,56 +274,56 @@ func StringNumberExt(numberPairs int, separator string, numberOfDigits int) stri
 }
 
 // StringNumber returns a random number as a string
-func StringNumber(numberPairs int, separator string) string {
-	return StringNumberExt(numberPairs, separator, 2)
+func (rd RandData) StringNumber(numberPairs int, separator string) string {
+	return rd.StringNumberExt(numberPairs, separator, 2)
 }
 
 // StringSample returns a random string from a list of strings
-func StringSample(stringList ...string) string {
+func (rd RandData) StringSample(stringList ...string) string {
 	str := ""
 	if len(stringList) > 0 {
-		str = stringList[Number(0, len(stringList))]
+		str = stringList[rd.Number(0, len(stringList))]
 	}
 	return str
 }
 
-func Boolean() bool {
-	nr := privateRand.Intn(2)
+func (rd RandData) Boolean() bool {
+	nr := rd.Intn(2)
 	return nr != 0
 }
 
 // Noun returns a random noun
-func Noun() string {
-	return randomFrom(jsonData.Nouns)
+func (rd RandData) Noun() string {
+	return rd.randomFrom(jsonData.Nouns)
 }
 
 // Adjective returns a random adjective
-func Adjective() string {
-	return randomFrom(jsonData.Adjectives)
+func (rd RandData) Adjective() string {
+	return rd.randomFrom(jsonData.Adjectives)
 }
 
-func uppercaseFirstLetter(word string) string {
+func (rd RandData) uppercaseFirstLetter(word string) string {
 	a := []rune(word)
 	a[0] = unicode.ToUpper(a[0])
 	return string(a)
 }
 
-func lowercaseFirstLetter(word string) string {
+func (rd RandData) lowercaseFirstLetter(word string) string {
 	a := []rune(word)
 	a[0] = unicode.ToLower(a[0])
 	return string(a)
 }
 
 // SillyName returns a silly name, useful for randomizing naming of things
-func SillyName() string {
-	return uppercaseFirstLetter(Noun()) + Adjective()
+func (rd RandData) SillyName() string {
+	return rd.uppercaseFirstLetter(rd.Noun()) + rd.Adjective()
 }
 
 // IpV4Address returns a valid IPv4 address as string
-func IpV4Address() string {
+func (rd RandData) IpV4Address() string {
 	blocks := []string{}
 	for i := 0; i < 4; i++ {
-		number := privateRand.Intn(255)
+		number := rd.Intn(255)
 		blocks = append(blocks, strconv.Itoa(number))
 	}
 
@@ -319,20 +331,20 @@ func IpV4Address() string {
 }
 
 // IpV6Address returns a valid IPv6 address as net.IP
-func IpV6Address() string {
+func (rd RandData) IpV6Address() string {
 	var ip net.IP
 	for i := 0; i < net.IPv6len; i++ {
-		number := uint8(privateRand.Intn(255))
+		number := uint8(rd.Intn(255))
 		ip = append(ip, number)
 	}
 	return ip.String()
 }
 
 // MacAddress returns an mac address string
-func MacAddress() string {
+func (rd RandData) MacAddress() string {
 	blocks := []string{}
 	for i := 0; i < 6; i++ {
-		number := fmt.Sprintf("%02x", privateRand.Intn(255))
+		number := fmt.Sprintf("%02x", rd.Intn(255))
 		blocks = append(blocks, number)
 	}
 
@@ -340,22 +352,22 @@ func MacAddress() string {
 }
 
 // Day returns random day
-func Day() string {
-	return randomFrom(jsonData.Days)
+func (rd RandData) Day() string {
+	return rd.randomFrom(jsonData.Days)
 }
 
 // Month returns random month
-func Month() string {
-	return randomFrom(jsonData.Months)
+func (rd RandData) Month() string {
+	return rd.randomFrom(jsonData.Months)
 }
 
 // FullDate returns full date
-func FullDate() string {
+func (rd RandData) FullDate() string {
 	timestamp := time.Now()
 	year := timestamp.Year()
-	month := Number(1, 13)
+	month := rd.Number(1, 13)
 	maxDay := time.Date(year, time.Month(month+1), 0, 0, 0, 0, 0, time.UTC).Day()
-	day := Number(1, maxDay+1)
+	day := rd.Number(1, maxDay+1)
 	date := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
 	return date.Format(DateOutputLayout)
 }
@@ -365,7 +377,7 @@ func FullDate() string {
 // If only one argument is supplied it is treated as the max date to return.
 // If a second argument is supplied it returns a date between (and including) the two dates.
 // Returned date is in format "Monday 2 Jan 2006".
-func FullDateInRange(dateRange ...string) string {
+func (rd RandData) FullDateInRange(dateRange ...string) string {
 	var (
 		min        time.Time
 		max        time.Time
@@ -379,32 +391,32 @@ func FullDateInRange(dateRange ...string) string {
 		max, _ = time.Parse(DateInputLayout, dateRange[1])
 	}
 	if !max.IsZero() && max.After(min) {
-		duration = Number(int(max.Sub(min))) * -1
+		duration = rd.Number(int(max.Sub(min))) * -1
 		dateString = max.Add(time.Duration(duration)).Format(DateOutputLayout)
 	} else if !max.IsZero() && !max.After(min) {
 		dateString = max.Format(DateOutputLayout)
 	} else {
-		dateString = FullDate()
+		dateString = rd.FullDate()
 	}
 	return dateString
 }
 
-func Timezone() string {
-	return randomFrom(jsonData.Timezones)
+func (rd RandData) Timezone() string {
+	return rd.randomFrom(jsonData.Timezones)
 }
 
-func Locale() string {
-	return randomFrom(jsonData.Locales)
+func (rd RandData) Locale() string {
+	return rd.randomFrom(jsonData.Locales)
 }
 
-func UserAgentString() string {
-	return randomFrom(jsonData.UserAgents)
+func (rd RandData) UserAgentString() string {
+	return rd.randomFrom(jsonData.UserAgents)
 }
 
-func PhoneNumber() string {
-	str := randomFrom(jsonData.CountryCallingCodes) + " "
+func (rd RandData) PhoneNumber() string {
+	str := rd.randomFrom(jsonData.CountryCallingCodes) + " "
 
-	str += Digits(privateRand.Intn(3) + 1)
+	str += Digits(rd.Intn(3) + 1)
 
 	for {
 		// max 15 chars
@@ -412,6 +424,6 @@ func PhoneNumber() string {
 		if remaining < 2 {
 			return "+" + str
 		}
-		str += " " + Digits(privateRand.Intn(remaining-1)+1)
+		str += " " + Digits(rd.Intn(remaining-1)+1)
 	}
 }

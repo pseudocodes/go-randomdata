@@ -98,31 +98,31 @@ func GenerateProfile(gender int) *Profile {
 			profile.Gender = "female"
 		}
 	}
-	profile.Name.Title = Title(gender)
-	profile.Name.First = FirstName(gender)
-	profile.Name.Last = LastName()
+	profile.Name.Title = privateRand.Title(gender)
+	profile.Name.First = privateRand.FirstName(gender)
+	profile.Name.Last = privateRand.LastName()
 	profile.ID.Name = "SSN"
 	profile.ID.Value = fmt.Sprintf("%d-%d-%d",
-		Number(101, 999),
-		Number(01, 99),
-		Number(100, 9999),
+		privateRand.Number(101, 999),
+		privateRand.Number(01, 99),
+		privateRand.Number(100, 9999),
 	)
 
 	profile.Email = strings.ToLower(profile.Name.First) + "." + strings.ToLower(profile.Name.Last) + "@example.com"
-	profile.Cell = PhoneNumber()
-	profile.Phone = PhoneNumber()
-	profile.Dob = FullDate()
-	profile.Registered = FullDate()
+	profile.Cell = privateRand.PhoneNumber()
+	profile.Phone = privateRand.PhoneNumber()
+	profile.Dob = privateRand.FullDate()
+	profile.Registered = privateRand.FullDate()
 	profile.Nat = "US"
 
-	profile.Location.City = City()
+	profile.Location.City = privateRand.City()
 	i, _ := strconv.Atoi(PostalCode("US"))
 	profile.Location.Postcode = i
-	profile.Location.State = State(2)
-	profile.Location.Street = StringNumber(1, "") + " " + Street()
+	profile.Location.State = privateRand.State(2)
+	profile.Location.Street = privateRand.StringNumber(1, "") + " " + privateRand.Street()
 
-	profile.Login.Username = SillyName()
-	pass := SillyName()
+	profile.Login.Username = privateRand.SillyName()
+	pass := privateRand.SillyName()
 	salt := RandStringRunes(16)
 	profile.Login.Password = pass
 	profile.Login.Salt = salt
